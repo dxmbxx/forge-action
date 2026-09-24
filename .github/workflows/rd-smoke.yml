@@ -1,0 +1,45 @@
+name: Forge R&D smoke (no AI credentials)
+on:
+  push:
+    paths:
+      - '.github/workflows/rd-smoke.yml'
+      - 'work/test-forge.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: simple-container-com/forge-action
+          ref: b85c96d5f597a28e9dc7528b818c5c79e6575ad5
+          path: work/forge-action
+      - name: Reproduce wrapper behavior with stubs
+        run: node work/test-forge.cjs
+      - name: Docker image startup without credentials
+        shell: bash
+        run: |
+          mkdir -p outputs
+          image='simplecontainer/forge-action@sha256:cde9f04ab9729c0f235682e90a6e38bf53d01383644adf412f1a80d82c83da56'
+          start=$(date +%s)
+          docker pull "$image" > outputs/docker-pull.log 2>&1
+          pulled=$(date +%s)
+          set +e
+          docker run --rm "$image" > outputs/docker-startup.log 2>&1
+          status=$?
+          set -e
+          ended=$(date +%s)
+          printf '{"pull_seconds":%s,"startup_seconds":%s,"exit_code":%s,"ai_calls":0}\n' "$((pulled-start))" "$((ended-pulled))" "$status" > outputs/docker-timing.json
+          cat outputs/docker-timing.json
+          cat outputs/docker-startup.log
+          test "$status" -eq 1
+          grep -q 'Required environment variables are missing' outputs/docker-startup.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forge-rd-smoke
+          path: outputs/
