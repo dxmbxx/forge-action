@@ -9,3 +9,14 @@ test('zero quantity line is ignored',()=>assert.equal(total([{priceCents:125,qua
 test('page numbering starts at one',()=>assert.deepEqual(paginate([1,2,3,4,5],1,2),[1,2]));
 test('last page can be short',()=>assert.deepEqual(paginate([1,2,3,4,5],3,2),[5]));
 test('page beyond end is empty',()=>assert.deepEqual(paginate([1],5,2),[]));
+
+for (const page of [0, -1, 1.5, NaN, Infinity]) {
+  test('rejects invalid page: ' + String(page), () => {
+    assert.throws(() => paginate([1, 2, 3], page, 2), RangeError);
+  });
+}
+for (const pageSize of [0, -1, 1.5, NaN, Infinity]) {
+  test('rejects invalid pageSize: ' + String(pageSize), () => {
+    assert.throws(() => paginate([1, 2, 3], 1, pageSize), RangeError);
+  });
+}
