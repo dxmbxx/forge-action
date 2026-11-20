@@ -29,4 +29,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run benchmark tests
-        run: node --test benchmark/test/cart.test.cjs
+        run: node --test benchmark/test/*.test.cjs
